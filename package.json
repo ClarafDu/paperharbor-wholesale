@@ -1,0 +1,1 @@
+{"name":"paperharbor-wholesale","private":true,"type":"module","engines":{"node":">=22.13"},"scripts":{"start":"node --env-file-if-exists=.env server.mjs","seed":"node --env-file-if-exists=.env db.mjs","test":"node --test"}}
