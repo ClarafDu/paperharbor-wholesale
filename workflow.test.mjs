@@ -32,10 +32,10 @@ test('Merchant publishes, buyer submits multiple products, merchant follows up a
   }
   assert.equal((await request('/admin')).location,'/admin/login');
   assert.equal((await request('/admin/reset',{confirm:'on'})).status,403);
-  assert.match((await request('/products?category=Notebooks&q=spiral')).body,/Studio Spiral Notebook/);
+  assert.match((await request('/products?category=Earrings&q=pearl')).body,/Pearl Drop Earrings/);
   for(let i=1;i<=6;i++) assert.equal((await request('/product-'+i+'.jpg')).status,200);
   session=(await request('/admin/login',{password:'test-password-only'})).cookie;
-  const fields={sku:'TEST-100',nameZh:'精装笔记本',nameEn:'Canvas Journal',descriptionEn:'A canvas-covered notebook.',specifications:'A5',category:'Notebooks',moq:'100',tiers:'100:2, 500:1.5',image:'/product-6.jpg',status:'published'};
+  const fields={sku:'TEST-100',nameZh:'珍珠耳环',nameEn:'Canvas Journal',descriptionEn:'A canvas-covered notebook.',specifications:'A5',category:'Earrings',moq:'100',tiers:'100:2, 500:1.5',image:'/product-6.jpg',status:'published'};
   assert.equal((await request('/admin/products/new',fields,session)).status,303);
   const catalog=(await request('/products?q=TEST-100')).body;
   const slug=catalog.match(/\/products\/(canvas-journal-[a-z0-9]+)/)[1];
@@ -43,20 +43,20 @@ test('Merchant publishes, buyer submits multiple products, merchant follows up a
   assert.match((await request('/products/'+slug)).body,/Volume pricing/);
   assert.equal((await request('/cart',{id,quantity:'99'})).status,422);
   cart=(await request('/cart',{id,quantity:'500'})).cookie;
-  cart=(await request('/cart',{id:'NB101',quantity:'200'},cart)).cookie;
+  cart=(await request('/cart',{id:'ER101',quantity:'200'},cart)).cookie;
   assert.match((await request('/quote',null,cart)).body,/\$1\.50/);
   const buyer={buyerName:'Demo Buyer',company:'Sample Retail',email:'buyer@example.com',country:'Canada',fictional:'on'};
   assert.equal((await request('/quote',{...buyer,email:'buyer@real.invalid'},cart)).status,422);
   assert.equal((await request('/quote',buyer,cart)).location,'/quote/received');
   const inbox=(await request('/admin?q=Sample',null,session)).body;
   assert.match(inbox,/Canvas Journal \(.*\) × 500/);
-  assert.match(inbox,/Studio Spiral Notebook \(NB101\) × 200/);
+  assert.match(inbox,/Pearl Drop Earrings \(ER101\) × 200/);
   const inquiry=inbox.match(/\/admin\/inquiries\/([a-z0-9-]+)/)[1];
   assert.equal((await request('/admin/inquiries/'+inquiry,{status:'contacted'},session)).status,303);
   assert.match((await request('/admin?status=contacted',null,session)).body,/Sample Retail/);
-  const ai=await request('/admin/ai',{target:id,source:'A5 精装笔记本'},session);
+  const ai=await request('/admin/ai',{target:id,source:'A5 珍珠耳环'},session);
   assert.equal(ai.status,200);
-  assert.match(ai.body,/Wholesale Notebook/);
+  assert.match(ai.body,/Wholesale Earrings/);
   assert.match(ai.body,/离线模拟/);
   const edited={...fields,nameEn:'Canvas Journal Revised',descriptionEn:'Edited by the merchant.',seoTitle:'Revised wholesale journal'};
   assert.equal((await request('/admin/products/'+id,edited,session)).status,303);

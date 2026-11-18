@@ -12,9 +12,9 @@ const quantityOk=(p,n)=>p?.status==='published'&&Number.isInteger(n)&&n>=p.moq&&
 const priceFor=(p,n)=>p.priceTiers.findLast(t=>n>=t.min)?.price;
 async function generate(name,source,p) {
   if (!process.env.AI_API_KEY) {
-    const types=[[/笔记本|手账/,'Wholesale Notebook'],[/套装|礼盒/,'Stationery Set'],[/文件夹/,'Document Folder'],[/便签/,'Sticky Note Set'],[/笔筒|收纳/,'Desk Organizer']];
-    const nameEn=types.find(([pattern])=>pattern.test(name+' '+source))?.[1]||p?.nameEn||'Wholesale Stationery';
-    return {nameEn,benefits:'Suitable for bulk assortments\nRequest packaging options with your quote',descriptionEn:`Explore ${nameEn.toLowerCase()} for retail assortments and office supply programs. Contact us for product and packaging details.`,seoTitle:`${nameEn} | Paper Harbor`,seoDescription:`Request a demo wholesale quote for ${nameEn.toLowerCase()} from Paper Harbor.`};
+    const types=[[/耳环|耳圈|耳钉/,'Wholesale Earrings'],[/项链/,'Pendant Necklace'],[/手链/,'Beaded Bracelet'],[/发夹|抓夹/,'Hair Clip'],[/戒指/,'Adjustable Ring']];
+    const nameEn=types.find(([pattern])=>pattern.test(name+' '+source))?.[1]||p?.nameEn||'Wholesale Jewelry';
+    return {nameEn,benefits:'Suitable for bulk assortments\nRequest packaging options with your quote',descriptionEn:`Explore ${nameEn.toLowerCase()} for retail assortments and boutique collections. Contact us for product and packaging details.`,seoTitle:`${nameEn} | Luma Bijoux`,seoDescription:`Request a demo wholesale quote for ${nameEn.toLowerCase()} from Luma Bijoux.`};
   }
   const response=await fetch(process.env.AI_API_URL,{method:'POST',signal:AbortSignal.timeout(20000),headers:{Authorization:'Bearer '+process.env.AI_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({
     model:process.env.AI_MODEL,messages:[{role:'system',content:'Return a JSON object with English string fields nameEn, benefits (one benefit per line), descriptionEn, seoTitle, seoDescription. Use only supplied product facts. Do not invent specifications, claims, certifications, supplier details, or prices.'},{role:'user',content:JSON.stringify({name,source})}],response_format:{type:'json_object'}
@@ -72,14 +72,14 @@ export function app(db=openDb(),{password=process.env.ADMIN_PASSWORD,secure=proc
         }
         f=Object.fromEntries([...new URLSearchParams(Buffer.concat(chunks).toString())].map(([k,val])=>[k,val.trim()]));
       }
-      if(!post&&/^\/(style\.css|product-[1-6]\.jpg)$/.test(path)){
+      if(!post&&/^\/(language\.js|style\.css|product-[1-6]\.jpg)$/.test(path)){
         const bytes=await readFile(new URL('./public'+path,import.meta.url));
-        return res.writeHead(200,{'Content-Type':path.endsWith('.css')?'text/css':'image/jpeg'}).end(bytes);
+        return res.writeHead(200,{'Content-Type':path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'image/jpeg'}).end(bytes);
       }
-      if(!post&&path==='/') return page('Wholesale stationery',v.home(all('products').filter(p=>p.status==='published')));
+      if(!post&&path==='/') return page('Wholesale jewelry',v.home(all('products').filter(p=>p.status==='published')));
       if(!post&&path==='/products'){
         const q=url.searchParams.get('q')||'', category=url.searchParams.get('category')||'';
-        const rows=all('products').filter(p=>p.status==='published'&&(!category||p.category===category)&&(p.nameEn+' '+p.sku).toLowerCase().includes(q.toLowerCase().trim()));
+        const rows=all('products').filter(p=>p.status==='published'&&(!category||p.category===category)&&(p.nameZh+' '+p.nameEn+' '+p.sku).toLowerCase().includes(q.toLowerCase().trim()));
         return page('Catalog',v.catalog(rows,q,category));
       }
       if(!post&&path.startsWith('/products/')){
@@ -155,7 +155,7 @@ export function app(db=openDb(),{password=process.env.ADMIN_PASSWORD,secure=proc
         const productId=existing?.id||randomUUID().replaceAll('-','');
         const slug=existing?.slug||((slugify(f.nameEn).slice(0,80)||'product')+'-'+productId.slice(0,8));
         const {nameZh,category,specifications,status}=f;
-        const p={id:productId,sku,slug,nameZh,category,specifications,status,moq,images:[f.image],priceTiers:tiers,...Object.fromEntries(contentKeys.map(k=>[k,f[k]||'']))};
+        const p={id:productId,sku,slug,descriptionZh:f.descriptionZh||'',benefitsZh:f.benefitsZh||'',nameZh,category,specifications,status,moq,images:[f.image],priceTiers:tiers,...Object.fromEntries(contentKeys.map(k=>[k,f[k]||'']))};
         db.prepare('INSERT INTO products VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(productId,slug,JSON.stringify(p));
         return redirect('/admin/products');
       }
@@ -182,5 +182,5 @@ export function app(db=openDb(),{password=process.env.ADMIN_PASSWORD,secure=proc
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   const port=Number(process.env.PORT||3000);
   const host=process.env.HOST||'127.0.0.1';
-  app().listen(port,host,()=>console.log(`Paper Harbor listening on http://${host}:${port}`));
+  app().listen(port,host,()=>console.log(`Luma Bijoux listening on http://${host}:${port}`));
 }
