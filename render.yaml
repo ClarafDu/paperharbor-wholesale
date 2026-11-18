@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: paperharbor-wholesale
+    runtime: node
+    plan: starter
+    buildCommand: node --check server.mjs
+    startCommand: npm start
+    healthCheckPath: /
+    disk:
+      name: paperharbor-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22.22.0"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PUBLIC_DEMO
+        value: "1"
+      - key: DB_PATH
+        value: /var/data/demo.sqlite
+      - key: ADMIN_PASSWORD
+        sync: false
